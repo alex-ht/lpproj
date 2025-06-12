@@ -5,6 +5,7 @@ from sklearn.neighbors import kneighbors_graph, NearestNeighbors
 from sklearn.utils import check_array
 from sklearn.base import BaseEstimator, TransformerMixin
 from scipy.sparse import csr_matrix
+from scipy.sparse import diags, issparse
 
 
 class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
@@ -56,28 +57,26 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         return np.dot(X, self.projection_)
 
     def _compute_projection(self, X, W):
-        """Compute the LPP projection matrix
-
-        Parameters
-        ----------
-        X : array_like, (n_samples, n_features)
-            The input data
-        W : array_like or sparse matrix, (n_samples, n_samples)
-            The precomputed adjacency matrix
-
-        Returns
-        -------
-        P : ndarray, (n_features, self.n_components)
-            The matrix encoding the locality preserving projection
-        """
-        # TODO: check W input; handle sparse case
+        """Compute the LPP projection matrix with sparse matrix support."""
         X = check_array(X)
-
-        D = np.diag(W.sum(1)).tocsr()
+    
+        # Make sure W is in sparse format
+        if not issparse(W):
+            W = csr_matrix(W)
+    
+        # D is diagonal matrix of row sums of W
+        d = np.array(W.sum(axis=1)).flatten()
+        D = diags(d)
+    
+        # L = D - W (still sparse)
         L = D - W
-        evals, evecs = eigh_robust(np.dot(X.T, np.dot(L, X)),
-                                   np.dot(X.T, np.dot(D, X)),
-                                   eigvals=(0, self.n_components - 1))
+    
+        # Compute X^T L X and X^T D X (dense result)
+        XLX = X.T @ (L @ X)
+        XDX = X.T @ (D @ X)
+    
+        # Solve the generalized eigenvalue problem
+        evals, evecs = eigh_robust(XLX, XDX, eigvals=(0, self.n_components - 1))
         return evecs
 
     def _compute_weights(self, X):
