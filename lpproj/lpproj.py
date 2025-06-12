@@ -73,7 +73,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         # TODO: check W input; handle sparse case
         X = check_array(X)
 
-        D = np.diag(W.sum(1))
+        D = np.diag(W.sum(1)).tocsr()
         L = D - W
         evals, evecs = eigh_robust(np.dot(X.T, np.dot(L, X)),
                                    np.dot(X.T, np.dot(D, X)),
