@@ -155,7 +155,7 @@ def eigh_robust(a, b=None, eigvals=None, eigvals_only=False,
         return linalg.eigh(a, **kwargs)
 
     # Compute eigendecomposition of b
-    kwargs_b = dict(turbo=turbo, check_finite=check_finite,
+    kwargs_b = dict(check_finite=check_finite,
                     overwrite_a=overwrite_b)  # b is a for this operation
     S, U = linalg.eigh(b, **kwargs_b)
 
