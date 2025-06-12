@@ -4,6 +4,7 @@ from scipy import linalg
 from sklearn.neighbors import kneighbors_graph, NearestNeighbors
 from sklearn.utils import check_array
 from sklearn.base import BaseEstimator, TransformerMixin
+from scipy.sparse import csr_matrix
 
 
 class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
@@ -84,7 +85,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm)
         self.nbrs_.fit(X)
-
+    
         if self.weight == 'adjacency':
             W = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                  mode='connectivity', include_self=True)
@@ -94,12 +95,11 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
             W.data = np.exp(-W.data ** 2 / self.weight_width ** 2)
         else:
             raise ValueError("Unrecognized Weight")
+    
+        # Efficiently symmetrize the sparse matrix
+        W = 0.5 * (W + W.T)
 
-        # symmetrize the matrix
-        # TODO: make this more efficient & keep sparse output
-        W = W.toarray()
-        W = np.maximum(W, W.T)
-        return W
+        return W.tocsr()
 
 
 def eigh_robust(a, b=None, eigvals=None, eigvals_only=False,
