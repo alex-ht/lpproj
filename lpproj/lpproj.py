@@ -146,8 +146,8 @@ def eigh_robust(a, b=None, eigvals=None, eigvals_only=False,
     v : (M, N) complex ndarray
         (if eigvals_only == False)
     """
-    kwargs = dict(eigvals=eigvals, eigvals_only=eigvals_only,
-                  turbo=turbo, check_finite=check_finite,
+    kwargs = dict(eigvals_only=eigvals_only,
+                  check_finite=check_finite,
                   overwrite_a=overwrite_a, overwrite_b=overwrite_b)
 
     # Check for easy case first:
